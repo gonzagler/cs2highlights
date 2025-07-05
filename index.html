@@ -27318,7 +27318,7 @@
         </div>
         
         <div class="footer">
-            <p>Сгенерировано: 05.07.2025 00:42:59</p>
+            <p>Сгенерировано: 05.07.2025 10:33:29</p>
         </div>
     </div>
     
@@ -27339,6 +27339,11 @@
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         
+        // Отладочная информация
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Is Mobile:', isMobile);
+        console.log('Is iOS:', isIOS);
+        
         // Lazy loading для видео с учетом мобильных устройств
         const videoObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -27346,12 +27351,17 @@
                     const videoCard = entry.target;
                     const videoIndex = videoCard.dataset.videoIndex;
                     
-                    // На мобильных устройствах загружаем только при явном взаимодействии
+                    // На мобильных устройствах не загружаем автоматически
                     if (isMobile) {
                         // Показываем сообщение о необходимости нажать для загрузки
                         const placeholderText = document.getElementById(`placeholder-text-${videoIndex}`);
                         if (placeholderText) {
                             placeholderText.textContent = 'Нажмите ▶ для загрузки';
+                        }
+                        // Показываем кнопку воспроизведения
+                        const playButton = document.getElementById(`play-${videoIndex}`);
+                        if (playButton) {
+                            playButton.style.display = 'flex';
                         }
                         return;
                     }
@@ -27416,13 +27426,22 @@
                     placeholder.innerHTML = '<div>Ошибка загрузки видео</div>';
                 }, { once: true });
                 
+                // Обработка прогресса загрузки
+                video.addEventListener('progress', function() {
+                    if (placeholderText) {
+                        placeholderText.textContent = 'Загрузка видео...';
+                    }
+                });
+                
                 // Таймаут для мобильных устройств
                 if (isMobile) {
                     setTimeout(() => {
                         if (video.readyState === 0) {
-                            placeholder.innerHTML = '<div>Нажмите кнопку воспроизведения для загрузки</div>';
+                            if (placeholderText) {
+                                placeholderText.textContent = 'Нажмите ▶ для загрузки';
+                            }
                         }
-                    }, 5000);
+                    }, 3000);
                 }
             }
         }
@@ -27558,19 +27577,16 @@
                     console.log('Ошибка воспроизведения:', error);
                 });
             } else {
-                                        // Останавливаем текущее видео
-                        video.pause();
-                        currentlyPlayingVideo = null;
-                        playButton.style.display = 'flex';
-                        
-                        // Убираем визуальную индикацию
-                        const videoCard = video.closest('.video-card');
-                        if (videoCard) {
-                            videoCard.classList.remove('playing');
-                        }
-                        
-                        // Скрываем подсказку по клавиатуре
-                        document.getElementById('keyboard-hint').classList.remove('show');
+                // Останавливаем текущее видео
+                video.pause();
+                currentlyPlayingVideo = null;
+                playButton.style.display = 'flex';
+                
+                // Убираем визуальную индикацию
+                const videoCard = video.closest('.video-card');
+                if (videoCard) {
+                    videoCard.classList.remove('playing');
+                }
                 
                 // Скрываем подсказку по клавиатуре
                 document.getElementById('keyboard-hint').classList.remove('show');
@@ -27971,6 +27987,18 @@
                 // Показываем мобильное сообщение
                 document.getElementById('mobile-info').style.display = 'block';
                 document.getElementById('desktop-info').style.display = 'none';
+                
+                // На мобильных устройствах показываем кнопки воспроизведения сразу
+                const playButtons = document.querySelectorAll('.play-button');
+                playButtons.forEach(button => {
+                    button.style.display = 'flex';
+                });
+                
+                // Обновляем текст плейсхолдеров
+                const placeholderTexts = document.querySelectorAll('[id^="placeholder-text-"]');
+                placeholderTexts.forEach(text => {
+                    text.textContent = 'Нажмите ▶ для загрузки';
+                });
             }
             
             // Обработка клика по видео для паузы/воспроизведения
